@@ -39,7 +39,7 @@ class SpooferWebSocketHandler(WebSocket):
 
     def received_message(self, m):
         print m
-        json_data = json.loads(m)
+        json_data = json.loads(str(m))
         if json_data["type"] == "goto":
             if self.spoofer is not None:
                 self.spoofer.goto(json_data["lat"], json_data["lon"])
@@ -60,7 +60,7 @@ class Root(object):
         return """<html>
     <head>
     <style type="text/css">
-      html, body, #map-canvas { height: 1000px; margin: 0; padding: 0;}
+      html, body, #map-canvas { height: 100%%; margin: 0; padding: 0;}
     </style>
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDn11yH1h4kJfnN4BQU_Ok0g3lbT9si_Tg">
@@ -139,17 +139,20 @@ class Root(object):
                     strokeWeight: 2,
                 });
                 currentRoute.setMap(map);
-                routeEndpointMarker = new google.maps.Marker({
-                    position: pointArray[pointArray.length-1],
-                    draggable: true,
-                    map: map
-                });
+                if (routeEndpointMarker == null)
+                {
+                    routeEndpointMarker = new google.maps.Marker({
+                        position: pointArray[pointArray.length-1],
+                        draggable: true,
+                        map: map
+                    });
 
-                google.maps.event.addListener(routeEndpointMarker, 'dragend', function() {
-                    var newPosition = routeEndpointMarker.getPosition();
-                    var jsonRequest = '{ "type" : "goto", "lat" : ' + newPosition.lat() + ', "lon" : ' + newPosition.lng() + '}';
-                    ws.send(jsonRequest);
-                });
+                    google.maps.event.addListener(routeEndpointMarker, 'dragend', function() {
+                        var newPosition = routeEndpointMarker.getPosition();
+                        var jsonRequest = '{ "type" : "goto", "lat" : ' + newPosition.lat() + ', "lon" : ' + newPosition.lng() + '}';
+                        ws.send(jsonRequest);
+                    });
+                }
 
 
 
@@ -179,12 +182,7 @@ class Root(object):
     <body>
 
     <div id="map-canvas"></div>
-    <form action='#' id='chatform' method='get'>
-      <textarea id='chat' cols='90' rows='10'></textarea>
-      <br />
-      <label for='message'>%(username)s: </label><input type='text' id='message' />
-      <input id='send' type='submit' value='Send' />
-      </form>
+
     </body>
     </html>
     """ % {'username': "User%d" % random.randint(0, 100), 'host': self.host, 'port': self.port, 'scheme': self.scheme}
@@ -214,7 +212,7 @@ if __name__ == '__main__':
 
     spoofer = Spoofer.Spoofer(64.135782, -21.877460)
     spoofer.start()
-    spoofer.goto(64.138865, -21.961221, Spoofer.DRIVING)
+    spoofer.goto(64.138865, -21.961221)
 
     cherrypy.quickstart(Root(args.host, args.port, spoofer), '', config={
         '/ws': {

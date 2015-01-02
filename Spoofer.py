@@ -84,7 +84,7 @@ class Spoofer(threading.Thread):
             return [(t[1], t[0]) for t in jsonResult["coordinates"]] #FIXME Sleppa fyrsta?
         return []
 
-    def goto(self, toLat, toLon, mode):
+    def goto(self, toLat, toLon):
         print "Goto: %0.9f, %0.9f"%(toLat, toLon)
         newRoute = self.getRoute(
             self.currentLat,
@@ -98,7 +98,11 @@ class Spoofer(threading.Thread):
         self.currentLegLock.acquire()
         self.currentLeg = []
         self.currentLegLock.release()
-        self.current_travel_mode = mode
+        for l in self.current_location_listeners:
+            try:
+                l.send_current_route(self.currentRoute)
+            except AttributeError:
+                self.current_location_listeners.remove(l)
         self.travelling = True
 
     def run(self):
@@ -118,9 +122,11 @@ class Spoofer(threading.Thread):
                         self.currentLon,
                         nextRoutePoint[0],
                         nextRoutePoint[1],
-                        1.666/1000.0)
+                        16.666/1000.0)
                     self.currentLegLock.release()
 
+                if len(self.currentLeg) < 1:
+                    continue
                 self.currentLegLock.acquire()
                 nextLegPoint = self.currentLeg[0]
                 self.currentLeg = self.currentLeg[1:]
@@ -134,8 +140,8 @@ class Spoofer(threading.Thread):
                         l.initial_route_sent = True
                 except AttributeError:
                     self.current_location_listeners.remove(l)
-            print "Lat,Lon: %0.9f, %0.9f"%(self.currentLat, self.currentLon)
-            time.sleep(0.2)
+            # print "Lat,Lon: %0.9f, %0.9f"%(self.currentLat, self.currentLon)
+            time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -146,9 +152,9 @@ if __name__ == "__main__":
     # print spoofer.getRoute(64.138865, -21.961221)
     #print spoofer.getDistance(52.215676, 5.963946, 52.2573, 6.1799)
     # print spoofer.getIntermediatePoints(-33, -71.6, 31.4, 121.8, 2000)
-    spoofer.goto(64.138865, -21.961221, DRIVING)
+    spoofer.goto(64.138865, -21.961221)
     time.sleep(10)
-    spoofer.goto(64.135782, -21.877460, DRIVING)
+    spoofer.goto(64.135782, -21.877460)
 
     while True:
         try:
