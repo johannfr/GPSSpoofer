@@ -106,10 +106,10 @@ class Spoofer(threading.Thread):
             for l in self.current_location_listeners:
                 try:
                     error_message = """
-                    <div id="content">
+                    <div id="content" style="width: 220px; height: 70px;">
                     <div id="siteNotice">
                     </div>
-                    <div id="bodyContent" style="width: 220px; height: 60px;">
+                    <div id="bodyContent">
                     <p><b>Villa:</b> Engin leið fannst.</p>
                     <p>Prófaðu að setja endapunkt nær vegi.</p>
                     </div>
