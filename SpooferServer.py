@@ -46,7 +46,8 @@ class SpooferWebSocketHandler(WebSocket):
         #cherrypy.engine.publish('websocket-broadcast', m)
 
     def closed(self, code, reason="A client left the room without a proper explanation."):
-        cherrypy.engine.publish('websocket-broadcast', TextMessage(reason))
+        pass
+        #cherrypy.engine.publish('websocket-broadcast', TextMessage(reason))
 
 class Root(object):
     def __init__(self, host, port, spoofer):
@@ -73,6 +74,8 @@ class Root(object):
         var myLocationMarker = null;
         var routeEndpointMarker = null;
         var currentRoute = null;
+        var currentRoutePreamble = null;
+        var currentRoutePostamble = null;
 
         $(document).ready(function() {
 
@@ -108,7 +111,7 @@ class Root(object):
             mapOptions);
             marker = new google.maps.Marker({
                 position: { lat: jsonObject.lat, lng: jsonObject.lon},
-                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
                 map: map
             });
 
@@ -125,10 +128,25 @@ class Root(object):
             {
                 if (currentRoute != null)
                 {
+                    currentRoutePreamble.setMap(null);
                     currentRoute.setMap(null);
+                    currentRoutePostamble.setMap(null);
                 }
                 var pointArray = [];
-                $.each(jsonObject.route, function(k, v) {
+                $.each(jsonObject.route[0], function(k, v) {
+                    pointArray.push(new google.maps.LatLng(v[0], v[1]));
+                });
+                currentRoutePreamble = new google.maps.Polyline({
+                    path: pointArray,
+                    geodesic: true,
+                    strokeColor: '#00FF00',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                });
+                currentRoutePreamble.setMap(map);
+
+                pointArray = [];
+                $.each(jsonObject.route[1], function(k, v) {
                     pointArray.push(new google.maps.LatLng(v[0], v[1]));
                 });
                 currentRoute = new google.maps.Polyline({
@@ -139,6 +157,21 @@ class Root(object):
                     strokeWeight: 2,
                 });
                 currentRoute.setMap(map);
+
+                pointArray = [];
+                $.each(jsonObject.route[2], function(k, v) {
+                    pointArray.push(new google.maps.LatLng(v[0], v[1]));
+                });
+                currentRoutePostamble = new google.maps.Polyline({
+                    path: pointArray,
+                    geodesic: true,
+                    strokeColor: '#00FF00',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                });
+                currentRoutePostamble.setMap(map);
+
+
                 if (routeEndpointMarker == null)
                 {
                     routeEndpointMarker = new google.maps.Marker({
