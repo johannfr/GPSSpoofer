@@ -26,6 +26,14 @@ class SpooferWebSocketHandler(WebSocket):
         json_data = json.dumps(location_data)
         self.send(json_data)
 
+    def send_error_message(self, message):
+        message_data = {
+            "type" : "error_message",
+            "message" : message
+        }
+        json_data = json.dumps(message_data)
+        self.send(json_data)
+
     def send_current_route(self, route):
         route_data = {
             "type" : "current_route",
@@ -76,6 +84,7 @@ class Root(object):
         var currentRoute = null;
         var currentRoutePreamble = null;
         var currentRoutePostamble = null;
+        var infoWindow = null;
 
         $(document).ready(function() {
 
@@ -93,6 +102,16 @@ class Root(object):
 
           ws.onmessage = function (evt) {
              jsonObject = JSON.parse(evt.data)
+
+            if (jsonObject.type == "error_message")
+            {
+                infoWindow = new google.maps.InfoWindow({
+                    content: jsonObject.message
+                });
+                infoWindow.open(map, routeEndpointMarker);
+                return;
+            }
+
              if (jsonObject.type == "current_location" &&!mapInitialized)
              {
                  var mapOptions = {

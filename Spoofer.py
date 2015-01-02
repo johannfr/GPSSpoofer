@@ -102,6 +102,24 @@ class Spoofer(threading.Thread):
             toLat,
             toLon)
 
+        if len(newRoute) < 1:
+            for l in self.current_location_listeners:
+                try:
+                    error_message = """
+                    <div id="content">
+                    <div id="siteNotice">
+                    </div>
+                    <div id="bodyContent" style="width: 220px; height: 60px;">
+                    <p><b>Villa:</b> Engin leið fannst.</p>
+                    <p>Prófaðu að setja endapunkt nær vegi.</p>
+                    </div>
+                    </div>
+                    """
+                    l.send_error_message(error_message)
+                except AttributeError:
+                    self.current_location_listeners.remove(l)
+            return
+
         if self.getDistance(
             self.currentLat,
             self.currentLon,
