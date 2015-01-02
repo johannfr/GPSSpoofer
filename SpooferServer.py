@@ -91,14 +91,6 @@ class Root(object):
             return;
           }
 
-          window.onbeforeunload = function(e) {
-            $('#chat').val($('#chat').val() + 'Bye bye...\\n');
-            ws.close(1000, '%(username)s left the room');
-
-            if(!e) e = window.event;
-            e.stopPropagation();
-            e.preventDefault();
-          };
           ws.onmessage = function (evt) {
              jsonObject = JSON.parse(evt.data)
              if (jsonObject.type == "current_location" &&!mapInitialized)
