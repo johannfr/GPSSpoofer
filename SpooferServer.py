@@ -3,6 +3,9 @@ import argparse
 import random
 import os
 import json
+import threading
+import time
+import socket
 
 import cherrypy
 
@@ -11,6 +14,52 @@ from ws4py.websocket import WebSocket
 from ws4py.messaging import TextMessage
 
 import Spoofer
+
+class SpooferTCPClient(threading.Thread):
+    def __init__(self, host, port):
+        threading.Thread.__init__(self)
+        self.setDaemon(True)
+        self.host = host
+        self.port = port
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+        self.started = False
+
+    def send_current_location(self, lat, lon):
+        message = "geo fix %s %s\r\n"%(lon, lat)
+        try:
+            self.socket.send(message)
+        except:
+            self.started = False
+            try:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.connect((self.host, self.port))
+                self.socket.send(message)
+            except:
+                return
+        self.started = True
+
+    def send_error_message(self, message):
+        pass
+
+    def send_current_route(self, route):
+        pass
+
+    def set_spoofer(self, spoofer):
+        pass
+
+    def run(self):
+        while True:
+            while not self.started:
+                time.sleep(0.5)
+            try:
+                indata = self.socket.recv(1024)
+            except:
+                pass
+            if not indata:
+                break
+            print indata.strip()
+            
 
 class SpooferWebSocketHandler(WebSocket):
     def __init__(self, *args, **kwargs):
@@ -245,6 +294,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Spoofer CherryPy Server')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('-p', '--port', default=9000, type=int)
+    parser.add_argument('--tcp', action='store_true')
     args = parser.parse_args()
 
     cherrypy.config.update({'server.socket_host': args.host,
@@ -257,6 +307,12 @@ if __name__ == '__main__':
     spoofer = Spoofer.Spoofer(64.135782, -21.877460)
     spoofer.start()
     spoofer.goto(64.138865, -21.961221)
+
+    if args.tcp:
+        tcpClient = SpooferTCPClient("localhost", 5554)
+        tcpClient.start()
+        spoofer.add_current_location_listener(tcpClient)
+
 
     cherrypy.quickstart(Root(args.host, args.port, spoofer), '', config={
         '/ws': {

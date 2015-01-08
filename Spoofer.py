@@ -10,12 +10,14 @@ import json
 from math import *
 import random
 
+
 ROUTE_URL = "http://www.yournavigation.org/api/1.0/gosmore.php?format=geojson&flat=%f&flon=%f&tlat=%f&tlon=%f&v=%s&fast=1&layer=mapnik"
 
 
 R = 6371.0
 DRIVING = 0
 WALKING = 1
+DIVISOR = 5.0
 
 
 class Spoofer(threading.Thread):
@@ -223,7 +225,7 @@ class Spoofer(threading.Thread):
                 except AttributeError:
                     self.current_location_listeners.remove(l)
             # print "Lat,Lon: %0.9f, %0.9f"%(self.currentLat, self.currentLon)
-            time.sleep(1)
+            time.sleep(1.0/DIVISOR)
 
 
 if __name__ == "__main__":
